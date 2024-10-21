@@ -3,58 +3,25 @@ import socket
 import selectors
 import traceback
 import types
+import libserver
+import gamestate
 
 sel = selectors.DefaultSelector()
 
-def accept_wrapper(sock):
+def accept_wrapper(sock, game):
     conn, addr = sock.accept()
     print("accepted connection from", addr)
     conn.setblocking(False)
-    data = types.SimpleNamespace(addr=addr, inb=b"", outb=b"")
-    events = selectors.EVENT_READ | selectors.EVENT_WRITE
-    sel.register(conn, events, data=data)
+    message = libserver.Message(sel, conn, addr, game)
+    sel.register(conn, selectors.EVENT_READ, data=message)
 
-
-# this routine is called when a client is ready to read or write data
-
-def service_connection(key, mask):
-    sock = key.fileobj
-    data = key.data
-    if mask & selectors.EVENT_READ:
-        recv_data = sock.recv(1024)
-        if recv_data:
-            data.outb += recv_data
-        else:
-            print("closing connection to", data.addr)
-            try:
-                sel.unregister(sock)
-            except Exception as e:
-                print(
-                    f"error: selector.unregister() exception for",
-                    f"{data.addr}: {repr(e)}",
-                )
-            try:
-                sock.close()
-            except OSError as e:
-                print(
-                    f"error: socket.close() exception for",
-                    f"{data.addr}: {repr(e)}",
-                    )
-            finally:
-                # Delete reference to socket object for garbage collection
-                sock = None
-    if mask & selectors.EVENT_WRITE:
-        if data.outb:
-            print("Sending response to", data.addr)
-            sent = sock.send(b"This is the server's response")
-            data.outb = data.outb[sent:]
 
 if len(sys.argv) != 3:
     print("usage:", sys.argv[0], "<host> <port>")
     sys.exit(1)
 
 host, port = sys.argv[1], int(sys.argv[2])
-    
+game = gamestate.Game()
 
 # set up the listening socket and register it with the SELECT mechanism
 
@@ -71,10 +38,11 @@ try:
         events = sel.select(timeout=None)
         for key, mask in events:
             if key.data is None:
-                accept_wrapper(key.fileobj)
+                accept_wrapper(key.fileobj, game)
             else:
+                message = key.data
                 try:
-                    service_connection(key, mask)
+                    message.process_events(mask)
                 except Exception:
                     print(
                         "main: error: exception for",
