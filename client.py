@@ -20,8 +20,6 @@ def create_request(action, value):
             content=bytes(action + value, encoding="utf-8"),
         )
 
-# this routine is called to create each of the many ECHO CLIENTs we want to create
-
 def start_connections(host, port, request):
     server_addr = (host, port)
     print("starting connection to", server_addr)
