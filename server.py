@@ -1,54 +1,63 @@
-import sys
 import socket
-import selectors
-import traceback
-import types
-import libserver
+import threading
 import gamestate
+import json
+import sys
+connect4 = gamestate.Game()
 
-sel = selectors.DefaultSelector()
+def start_connections(server, clients):
+    client, addr = server.accept()
+    clients.append((client, addr))
+    threading.Thread(target = handle_connection, args = (client, addr)).start()
 
-def accept_wrapper(sock, game):
-    conn, addr = sock.accept()
-    print("accepted connection from", addr)
-    conn.setblocking(False)
-    message = libserver.Message(sel, conn, addr, game)
-    sel.register(conn, selectors.EVENT_READ, data=message)
+def handle_connection(client, addr):
+    print("Accepted client", client)
+    try:
+        while True:
+            data = client.recv(1024)
+            if not data:
+                break
+            message = json.loads(data.decode('utf-8'))
+            print("Recieved message", message, "from", addr)
+            response = process_message(message, addr)
+            if (response == connect4.board):
+                for cli in clients:
+                    cli[0].send(json.dumps(response).encode('utf-8'))
+            else:
+                client.send(json.dumps(response).encode('utf-8'))
+    except KeyboardInterrupt:
+        print("caught keyboard interrupt, exiting")
+    finally:
+        client.close()
+
+def process_message(message, addr):
+    try:
+        split = message.split()
+        action = split[0]
+        value = int(split[1])
+        if(action == "place"):
+            if (connect4.drop_token(value, addr)):
+                return connect4.board
+            else:
+               return "Invalid move"
+        else:
+            return "Unknown request"
+    except Exception:
+        return "Unknown request"
 
 
 if len(sys.argv) != 3:
     print("usage:", sys.argv[0], "<host> <port>")
     sys.exit(1)
-
 host, port = sys.argv[1], int(sys.argv[2])
-game = gamestate.Game()
 
-# set up the listening socket and register it with the SELECT mechanism
+server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+server.bind((host, port))
+server.listen(2)
+clients = []
 
-lsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-lsock.bind((host, port))
-lsock.listen()
-print("listening on", (host, port))
-lsock.setblocking(False)
-sel.register(lsock, selectors.EVENT_READ, data=None)
+while len(clients) < 2:
+    start_connections(server, clients)
 
-# the main event loop
-try:
-    while True:
-        events = sel.select(timeout=None)
-        for key, mask in events:
-            if key.data is None:
-                accept_wrapper(key.fileobj, game)
-            else:
-                message = key.data
-                try:
-                    message.process_events(mask)
-                except Exception:
-                    print(
-                        "main: error: exception for",
-                        f"{key.data.addr}:\n{traceback.format_exc()}",
-                    )
-except KeyboardInterrupt:
-    print("caught keyboard interrupt, exiting")
-finally:
-    sel.close()
+connect4.start_game(clients)
+print("Server full")
