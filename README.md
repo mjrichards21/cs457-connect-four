@@ -1,5 +1,9 @@
 This is a simple Connect 4 game implemented using Python and sockets.
-
+**New This Sprint**
+1. **Gamestate**: Once two clients connect to server game will be initilized.
+2. **Player Turn**: Game will only drop player token if it is that player's turn.
+3. **Player Token**: Player 1 has an "O" token, player 2 uses "X".
+   
 **How to run:**
 1. **Start the server:** Run the `server.py` script, give host and port as args.
 2. **Connect clients:** Run the `client.py` script, give host and port as args.
