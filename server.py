@@ -3,6 +3,8 @@ import threading
 import gamestate
 import json
 import sys
+import argparse
+
 connect4 = gamestate.Game()
 
 def start_connections(server, clients):
@@ -46,11 +48,14 @@ def process_message(message, addr):
         return "Unknown request"
 
 
-if len(sys.argv) != 3:
-    print("usage:", sys.argv[0], "<host> <port>")
-    sys.exit(1)
-host, port = sys.argv[1], int(sys.argv[2])
-
+parser = argparse.ArgumentParser(
+                    prog='server',
+                    description='To run, supply a port number',
+                    )
+parser.add_argument('-p', '--port', required = True)
+args = vars(parser.parse_args())
+host = '0.0.0.0'
+port = int(args['port'])
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.bind((host, port))
 server.listen(2)
