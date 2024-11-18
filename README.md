@@ -1,7 +1,8 @@
 This is a simple Connect 4 game implemented using Python and sockets.
+
 **New This Sprint**
-1.**Game Logic** Players can take turns dropping tokens into the Connect 4 grid, and a winner will be announced once one player reaches 4 in a row.
-2.**Arguments** The client takes two args: -i and -p, corresponding to server IP and port. The Server takes one arg, -p, for port number. Additionally, for both scripts a -h option is available.
+1. **Game Logic** Players can take turns dropping tokens into the Connect 4 grid, and a winner will be announced once one player reaches 4 in a row.
+2. **Arguments** The client takes two args: -i and -p, corresponding to server IP and port. The Server takes one arg, -p, for port number. Additionally, for both scripts a -h option is available.
    
 **How to run:**
 1. **Start the server:** Run the `server.py` script, give -p port as arg.
