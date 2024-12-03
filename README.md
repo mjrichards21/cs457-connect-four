@@ -2,7 +2,7 @@ This is a simple Connect 4 game implemented using Python and sockets.
 
 **New This Sprint**
 1. **Multiple games** Server can run multiple games with different clients without them interfering with eachother
-2. **End game state** Server tells client if they one then disconnects the players
+2. **End game state** Server tells client if they won then disconnects the players
    
 **How to run:**
 1. **Start the server:** Run the `server.py` script, give -p port as arg.
