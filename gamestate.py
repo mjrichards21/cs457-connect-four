@@ -2,49 +2,52 @@ class Player:
     def _init_(self):
         self.token = "O"
         self.addr = None
+        self.client = None
         self.turn = False
+        self.code = 0
+        self.game = None
 
 class Game:
     def __init__(self):
-        self.num_players = 0
         self.max_players = 2
         self.board_size = 7
         self.players = []
-        self.player_turn = 0
-        self.code = 1234
         self.num_spaces = 42
         self.turns_played = 0
         self.board = [[" ", " ", " ", " ", " ", " ", " "], [" ", " ", " ", " ", " ", " ", " "], [" ", " ", " ", " ", " ", " ", " "], [" ", " ", " ", " ", " ", " ", " "],
                       [" ", " ", " ", " ", " ", " ", " "], [" ", " ", " ", " ", " ", " ", " "]]
         
-    def start_game(self, clients):
+    def start_game(self):
         print("Game started!")
-        self.players = []
         self.board = [[" ", " ", " ", " ", " ", " ", " "], [" ", " ", " ", " ", " ", " ", " "], [" ", " ", " ", " ", " ", " ", " "], [" ", " ", " ", " ", " ", " ", " "],
                       [" ", " ", " ", " ", " ", " ", " "], [" ", " ", " ", " ", " ", " ", " "]]
-        player_one = Player()
-        player_one.addr = clients[0][1]
+        player_one = self.players[0]
         player_one.token = "O"
         player_one.turn = True
-        self.players.append(player_one)
-        player_two = Player()
-        player_two.addr = clients[1][1]
+        player_two = self.players[1]
         player_two.token = "X"
         player_two.turn = False
-        self.players.append(player_two)
         self.turns_played = 0
     
     def change_turn(self):
         self.players[0].turn = not self.players[0].turn
         self.players[1].turn = not self.players[1].turn
-        
-    def quit_game(self, code):
-        if (code == self.code and self.num_players > 0):
-            self.remove_player()
-            return True
-        else:
-            return False
-        
+    
+    def add_player(self, addr, client, code):
+        player = Player()
+        player.addr = addr
+        player.client = client
+        player.game = self
+        player.code = code
+        self.players.append(player)
+        return player
+    
+    def remove_player(self, player):
+        if (player in self.players):
+            print(player)
+            self.players.remove(player)
+
+    #This function drops the player's connect 4 token into the board   
     def drop_token(self, position, addr):
         player = self.players[0]
         if (player.turn == False):
@@ -53,13 +56,14 @@ class Game:
             position = position - 1
             row = self.determine_position(position, player.token)
             if (row == -1):
-                return False
+                return [False, False]
             self.turns_played += 1
-            self.check_winner(player, position, row)
+            is_winner = self.check_winner(player, position, row)
             self.change_turn()
-            return True
-        return False
+            return [True, is_winner]
+        return [False, False]
     
+    #This function checks after every move if there is a winner, using three helper functions
     def check_winner(self, player, position, row):
         board = self.board
         token = player.token
@@ -67,7 +71,8 @@ class Game:
         vertical = self.check_vertical(board, token, position)
         diagonal = self.check_diagonal(board, token)
         if (horizontal or vertical or diagonal):
-            print (player, "has won!")
+            return True
+        return False
 
     def check_horizontal(self, board, token, row):
         count = 0
@@ -114,5 +119,3 @@ class Game:
                 self.board[row][position] = token
                 return row
         return -1
-
-    
