@@ -14,8 +14,13 @@ This is a simple Connect 4 game implemented using Python and sockets.
 
 **Current game message protocol:**
 1. **place:** Drops a token in the designated column (1-7)
-1. **join:** Allows the client to join the game by code
-2. **host:** Allows the client to create a game with a code
+2. **join:** Allows the client to join the game by code
+3. **host:** Allows the client to create a game with a code
+
+**Security/Risk Evaluation:**
+1. **No encryption:** Requests and responses are not encrypted when being sent, potentially allowing a user to intercept a game code. Some form of encryption could handle this issue.
+2. **No client/game limit:** The server allows any number of users to join and any number of games to be played, making it vulnerable to being overwhelmed with some form of dos attack. This could be addressed by adding a limit to the number of clients and a limit to number of requests a client can send in a given time period.
+3. **No authentication or verification:** The server does not check who a client is, and there is no verification method such as a password when joining, this could be fixed by having the server need some sort of code in order for the client to join.
 
 **Technologies used:**
 * Python
